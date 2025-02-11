@@ -20,16 +20,16 @@ jobs:
           go-version: 1.23
 
       - name: Build for Linux
-        run: GOOS=linux GOARCH=amd64 go build -o spwd-linux
+        run: GOOS=linux GOARCH=amd64 go build -o spwd-linux ./cmd
 
       - name: Build for Windows
-        run: GOOS=windows GOARCH=amd64 go build -o spwd-windows.exe
+        run: GOOS=windows GOARCH=amd64 go build -o spwd-windows.exe ./cmd
 
       - name: Build for MacOS (Intel)
-        run: GOOS=darwin GOARCH=amd64 go build -o spwd-macos
+        run: GOOS=darwin GOARCH=amd64 go build -o spwd-macos ./cmd
 
       - name: Build for MacOS (Apple Silicon M1/M2)
-        run: GOOS=darwin GOARCH=arm64 go build -o spwd-macos-arm64
+        run: GOOS=darwin GOARCH=arm64 go build -o spwd-macos-arm64 ./cmd
 
       - name: Generate Release Notes
         run: |
