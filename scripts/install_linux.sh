@@ -1,27 +1,32 @@
 #!/bin/bash
-# Linux Install Script for spwd
+
+set -e  # Exit immediately if a command exits with a non-zero status.
 
 echo "Installing spwd..."
 echo
 
-# Check if Go is installed
-if ! command -v go &> /dev/null
-then
-    echo "Go is not installed. Please install Go from https://golang.org/dl/"
+# Check if Go is installed (not required for pre-built binary)
+if ! command -v go &> /dev/null; then
+    echo "Warning: Go is not installed. This script will install the pre-built binary instead."
+fi
+
+# Define the latest release URL from GitHub
+LATEST_RELEASE=$(curl -s https://api.github.com/repos/Aryagorjipour/spwd/releases/latest | grep "browser_download_url" | cut -d '"' -f 4 | grep "linux")
+
+if [[ -z "$LATEST_RELEASE" ]]; then
+    echo "Error: Could not fetch the latest release. Please check the repository."
     exit 1
 fi
 
-# Clone the repository
-echo "Cloning repository..."
-git clone https://github.com/Aryagorjipour/spwd.git
-cd spwd
+echo "Downloading latest version from: $LATEST_RELEASE"
+curl -L -o spwd "$LATEST_RELEASE"
 
-# Build the project
-echo "Building the project..."
-go build -o spwd .
+# Make it executable
+chmod +x spwd
 
-# Move the executable to a directory in the PATH
-echo "Moving executable to PATH..."
-sudo mv spwd /usr/local/bin/
+# Move to /usr/local/bin for system-wide usage
+echo "Moving executable to /usr/local/bin/"
+sudo mv spwd /usr/local/bin/spwd
 
-echo "Installation completed. You can now use the spwd command in any terminal."
+echo "Installation completed successfully!"
+echo "You can now run 'spwd' from any terminal."

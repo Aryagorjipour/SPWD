@@ -87,20 +87,58 @@ By default, the generated password will be copied to your clipboard after it is 
 
 ---
 
-## License
+## 🛠️ Troubleshooting
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### ❌ Command Not Found
+If you get a **"command not found"** error, try:
+```bash
+export PATH=$PATH:/usr/local/bin
+```
+
+### 🔄 Update to the Latest Version
+To update `spwd` to the latest version:
+```bash
+curl -sSL https://raw.githubusercontent.com/Aryagorjipour/spwd/main/install.sh | bash
+```
+
+### ⚠️ Permission Denied on Linux
+If you get **"Permission denied"**, run:
+```bash
+sudo chmod +x /usr/local/bin/spwd
+```
 
 ---
 
-## Contributing
-
-If you’d like to contribute, please fork the repository and submit a pull request. 
-Make sure to follow the Go code style.
+## 🤝 How to Contribute
+We welcome contributions! To contribute:
+1. **Fork the repository** on GitHub.
+2. **Clone your fork**:
+```bash
+  git clone https://github.com/Aryagorjipour/spwd.git
+```
+3. **Create a new branch**:
+```bash
+  git checkout -b feature-name
+```
+4. **Make your changes and commit**:
+```bash
+  git add .
+  git commit -m "Added new feature"
+```
+5. **Push your branch**:
+```bash
+  git push origin feature-name
+```
+6. **Create a Pull Request** on GitHub.
 
 ---
-
 ## Acknowledgments
 
 - Thanks to the Go community for making such a powerful and easy-to-use programming language.
 - Clipboard functionality provided by the [atotto/clipboard](https://github.com/atotto/clipboard) package.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

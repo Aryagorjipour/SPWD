@@ -1,29 +1,30 @@
 @echo off
-REM Windows Install Script for spwd
+:: Windows Install Script for spwd
 
 echo Installing spwd...
 echo.
 
-REM Check if Go is installed
-go version >nul 2>&1
+:: Check if Go is installed (not required for pre-built binary)
+where go >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo Go is not installed. Please install Go from https://golang.org/dl/.
-    exit /b
+    echo Warning: Go is not installed. This script will install the pre-built binary instead.
 )
 
-REM Clone the repository
-echo Cloning repository...
-git clone https://github.com/Aryagorjipour/spwd.git
-cd spwd
+:: Define the latest release URL from GitHub
+for /f "tokens=*" %%i in ('powershell -Command "(Invoke-WebRequest -Uri 'https://api.github.com/repos/Aryagorjipour/spwd/releases/latest' -UseBasicParsing).Content | ConvertFrom-Json | Select-Object -ExpandProperty assets | Where-Object { $_.browser_download_url -match 'windows' } | Select-Object -ExpandProperty browser_download_url"') do set LATEST_RELEASE=%%i
 
-REM Build the project
-echo Building the project...
-go build -o spwd.exe .
+if "%LATEST_RELEASE%"=="" (
+    echo Error: Could not fetch the latest release. Please check the repository.
+    exit /b 1
+)
 
-REM Move the executable to a directory in the PATH
-echo Moving executable to PATH...
-move spwd.exe C:\Windows\System32
+echo Downloading latest version from: %LATEST_RELEASE%
+powershell -Command "(New-Object System.Net.WebClient).DownloadFile('%LATEST_RELEASE%', 'spwd.exe')"
 
-echo Installation completed. You can now use the spwd command in any terminal.
+:: Move the file to a location in the PATH
+echo Moving executable to C:\Windows\System32
+move spwd.exe C:\Windows\System32 >nul 2>&1
 
+echo Installation completed successfully!
+echo You can now run 'spwd' from any command prompt.
 pause
