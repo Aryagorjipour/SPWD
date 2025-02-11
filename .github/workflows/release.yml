@@ -14,6 +14,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Verify Go files
+        run: |
+          if [ ! -d "./cmd" ]; then
+            echo "Directory ./cmd does not exist."
+            exit 1
+          fi
+          if [ -z "$(ls -A ./cmd/*.go 2>/dev/null)" ]; then
+            echo "No Go files found in the ./cmd directory."
+            exit 1
+          fi
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
