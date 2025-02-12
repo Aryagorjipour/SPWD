@@ -24,3 +24,7 @@ go.work.sum
 # IDE directories
 .idea
 .vscode
+
+# project files
+config.json
+passwords.db
