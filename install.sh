@@ -40,9 +40,13 @@ if [ ! -f "/etc/spwd/config.json" ]; then
         exit 1
     fi
 
-    SECRET_KEY=$(head -c 32 /dev/urandom | base64)
+    # Generate a 32-byte secret key and escape characters for sed
+    SECRET_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n')
+    ESCAPED_SECRET_KEY=$(printf '%s\n' "$SECRET_KEY" | sed 's/[\/&]/\\&/g')
+
+    # Copy sample config and replace the placeholder with the generated key
     sudo cp /etc/spwd/config.sample.json /etc/spwd/config.json
-    sudo sed -i "s/GENERATE_ON_INSTALL/$SECRET_KEY/" /etc/spwd/config.json
+    sudo sed -i "s/GENERATE_ON_INSTALL/$ESCAPED_SECRET_KEY/" /etc/spwd/config.json
 fi
 
 echo "Installation completed successfully!"
