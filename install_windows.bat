@@ -19,13 +19,13 @@ powershell -Command "(New-Object System.Net.WebClient).DownloadFile('%LATEST_REL
 echo Moving executable to C:\Windows\System32
 move spwd.exe C:\Windows\System32 >nul 2>&1
 
-:: Generate config.json if it doesn't exist
+:: Ensure C:\ProgramData\spwd\ exists
 if not exist "C:\ProgramData\spwd\" mkdir "C:\ProgramData\spwd"
-if not exist "C:\ProgramData\spwd\config.json" (
-    echo Generating config.json...
-    powershell -Command "$secretKey = [System.Convert]::ToBase64String((1..32 | % { Get-Random -Minimum 0 -Maximum 256 }))"
-    copy config.sample.json C:\ProgramData\spwd\config.json
-    powershell -Command "(Get-Content C:\ProgramData\spwd\config.json) -replace 'GENERATE_ON_INSTALL', $secretKey | Set-Content C:\ProgramData\spwd\config.json"
+
+:: Ensure the database exists
+if not exist "C:\ProgramData\spwd\passwords.db" (
+    echo Creating database...
+    type nul > "C:\ProgramData\spwd\passwords.db"
 )
 
 echo Installation completed successfully!

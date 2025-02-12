@@ -4,10 +4,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"runtime"
 	"time"
 
 	"go.etcd.io/bbolt"
 )
+
+// DB file path (OS-Specific)
+var dbPath string
+var db *bbolt.DB
+
+func init() {
+	if runtime.GOOS == "windows" {
+		dbPath = "C:\\ProgramData\\spwd\\passwords.db" // Windows path
+	} else {
+		dbPath = "/etc/spwd/passwords.db" // Linux/macOS path
+	}
+}
 
 // PasswordEntry represents a stored password
 type PasswordEntry struct {
@@ -17,22 +32,37 @@ type PasswordEntry struct {
 	Note      string `json:"note,omitempty"`
 }
 
-// DB instance
-var db *bbolt.DB
-
-// OpenDB initializes the database
+// OpenDB initializes the database, creating it if it does not exist
 func OpenDB() error {
+	// Ensure the directory exists
+	dbDir := dbPath[:len(dbPath)-len("/passwords.db")]
+	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
+		err := os.MkdirAll(dbDir, 0755)
+		if err != nil {
+			log.Println("Error creating database directory:", err)
+			return err
+		}
+	}
+
+	// Open or create the database
 	var err error
-	db, err = bbolt.Open("passwords.db", 0600, nil)
+	db, err = bbolt.Open(dbPath, 0600, nil)
 	if err != nil {
+		log.Println("Failed to open database:", err)
 		return err
 	}
 
-	// Create bucket if not exists
-	return db.Update(func(tx *bbolt.Tx) error {
+	// Create the "Passwords" bucket if it doesn't exist
+	err = db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("Passwords"))
 		return err
 	})
+	if err != nil {
+		log.Println("Failed to create Passwords bucket:", err)
+		return err
+	}
+
+	return nil
 }
 
 // SavePassword securely stores a generated password and returns a unique ID
