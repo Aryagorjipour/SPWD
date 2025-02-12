@@ -26,19 +26,19 @@ func GetExecutablePath() (string, error) {
 func OpenDB() error {
 	exeDir, err := GetExecutablePath()
 	if err != nil {
-		log.Println("Error determining executable path:", err)
+		log.Println("❌ Error determining executable path:", err)
 		return err
 	}
 
 	dbPath := filepath.Join(exeDir, "passwords.db")
-	log.Println("Using database path:", dbPath) // Debug log
+	log.Println("🟢 Using database path:", dbPath) // Debug log
 
 	// Check if the database file exists, create it if necessary
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		log.Println("Database file not found. Creating new database...")
+		log.Println("⚠️ Database file not found. Creating new database...")
 		file, err := os.Create(dbPath)
 		if err != nil {
-			log.Println("Error creating database file:", err)
+			log.Println("❌ Error creating database file:", err)
 			return err
 		}
 		file.Close()
@@ -46,7 +46,7 @@ func OpenDB() error {
 		// Set group read/write permissions
 		err = os.Chmod(dbPath, 0660)
 		if err != nil {
-			log.Println("Failed to set permissions on database file:", err)
+			log.Println("❌ Failed to set permissions on database file:", err)
 		}
 
 		// Set the correct group (same as the executable)
@@ -58,9 +58,10 @@ func OpenDB() error {
 		}
 	}
 
+	// Open the database
 	db, err = bbolt.Open(dbPath, 0660, nil)
 	if err != nil {
-		log.Println("Failed to open database:", err)
+		log.Println("❌ Failed to open database:", err)
 		return err
 	}
 
@@ -70,11 +71,11 @@ func OpenDB() error {
 		return err
 	})
 	if err != nil {
-		log.Println("Failed to create Passwords bucket:", err)
+		log.Println("❌ Failed to create Passwords bucket:", err)
 		return err
 	}
 
-	log.Println("Database initialized successfully at", dbPath)
+	log.Println("✅ Database initialized successfully at", dbPath)
 	return nil
 }
 
@@ -92,7 +93,7 @@ type PasswordEntry struct {
 func SavePassword(password string) (int, error) {
 	err := OpenDB()
 	if err != nil {
-		log.Println("Error opening database:", err)
+		log.Println("❌ Error opening database:", err)
 		return 0, err
 	}
 	defer db.Close()
@@ -100,7 +101,7 @@ func SavePassword(password string) (int, error) {
 	// Encrypt the password before saving
 	encryptedPass, err := Encrypt(password)
 	if err != nil {
-		log.Println("Error encrypting password:", err)
+		log.Println("❌ Error encrypting password:", err)
 		return 0, err
 	}
 
@@ -111,6 +112,7 @@ func SavePassword(password string) (int, error) {
 		// Get next sequence ID (auto-increment)
 		nextID, err := b.NextSequence()
 		if err != nil {
+			log.Println("❌ Error getting next sequence ID:", err)
 			return err
 		}
 		id = nextID
@@ -126,13 +128,13 @@ func SavePassword(password string) (int, error) {
 		// Store the password entry with its ID as the key
 		err = b.Put([]byte(fmt.Sprintf("%d", id)), data)
 		if err == nil {
-			log.Printf("Password stored successfully with ID: %d\n", id)
+			log.Printf("🟢 Password stored successfully with ID: %d\n", id)
 		}
 		return err
 	})
 
 	if err != nil {
-		log.Println("Failed to save password:", err)
+		log.Println("❌ Failed to save password:", err)
 		return 0, err
 	}
 
