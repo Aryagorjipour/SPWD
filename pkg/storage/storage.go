@@ -18,9 +18,9 @@ var db *bbolt.DB
 
 func init() {
 	if runtime.GOOS == "windows" {
-		dbPath = "C:\\ProgramData\\spwd\\passwords.db" // Windows path
+		dbPath = "C:\\ProgramData\\spwd\\passwords.db"
 	} else {
-		dbPath = "/etc/spwd/passwords.db" // Linux/macOS path
+		dbPath = "/etc/spwd/passwords.db"
 	}
 }
 
@@ -44,6 +44,17 @@ func OpenDB() error {
 		}
 	}
 
+	// Check if the database file exists
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		log.Println("Database file not found. Creating new database...")
+		file, err := os.Create(dbPath)
+		if err != nil {
+			log.Println("Error creating database file:", err)
+			return err
+		}
+		file.Close()
+	}
+
 	// Open or create the database
 	var err error
 	db, err = bbolt.Open(dbPath, 0600, nil)
@@ -65,10 +76,11 @@ func OpenDB() error {
 	return nil
 }
 
-// SavePassword securely stores a generated password and returns a unique ID
+// SavePassword stores a password in the database with an auto-incremented ID
 func SavePassword(password string) (int, error) {
 	err := OpenDB()
 	if err != nil {
+		log.Println("Error opening database:", err)
 		return 0, err
 	}
 	defer db.Close()
@@ -76,6 +88,7 @@ func SavePassword(password string) (int, error) {
 	// Encrypt the password before saving
 	encryptedPass, err := Encrypt(password)
 	if err != nil {
+		log.Println("Error encrypting password:", err)
 		return 0, err
 	}
 
@@ -99,10 +112,19 @@ func SavePassword(password string) (int, error) {
 		data, _ := json.Marshal(entry)
 
 		// Store the password entry with its ID as the key
-		return b.Put([]byte(fmt.Sprintf("%d", id)), data)
+		err = b.Put([]byte(fmt.Sprintf("%d", id)), data)
+		if err == nil {
+			log.Printf("Password stored successfully with ID: %d\n", id)
+		}
+		return err
 	})
 
-	return int(id), err
+	if err != nil {
+		log.Println("Failed to save password:", err)
+		return 0, err
+	}
+
+	return int(id), nil
 }
 
 // GetAllPasswords retrieves all passwords (decrypted)

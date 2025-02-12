@@ -1,7 +1,7 @@
 #!/bin/bash
 # Linux Install Script for spwd
 
-set -e  # Exit immediately if a command fails
+set -e  # Exit if any command fails
 
 echo "Installing spwd..."
 echo
@@ -38,6 +38,12 @@ sudo mv "$TMP_FILE" /usr/local/bin/spwd
 
 # Ensure /etc/spwd/ directory exists
 sudo mkdir -p /etc/spwd
+
+# Ensure the database exists
+if [ ! -f "/etc/spwd/passwords.db" ]; then
+    echo "Creating database file..."
+    sudo touch /etc/spwd/passwords.db
+fi
 
 # Define the URL for config.sample.json
 CONFIG_URL="https://raw.githubusercontent.com/Aryagorjipour/spwd/main/config.sample.json"
