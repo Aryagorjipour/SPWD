@@ -27,9 +27,10 @@ sudo mv spwd /usr/local/bin/spwd
 # Ensure /etc/spwd/ directory exists
 sudo mkdir -p /etc/spwd
 
-# Download config.sample.json from GitHub and create config.json
+# Define the URL for config.sample.json
 CONFIG_URL="https://raw.githubusercontent.com/Aryagorjipour/spwd/main/config.sample.json"
 
+# Download config.sample.json and create config.json
 if [ ! -f "/etc/spwd/config.json" ]; then
     echo "Generating config.json..."
     sudo curl -sSL -o /etc/spwd/config.sample.json "$CONFIG_URL"
