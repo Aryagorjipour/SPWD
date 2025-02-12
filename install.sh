@@ -17,6 +17,7 @@ fi
 echo "Downloading latest version from: $LATEST_RELEASE"
 
 # Ensure download location is writable
+INSTALL_DIR="/usr/local/bin"
 TMP_FILE="/tmp/spwd"
 sudo rm -f "$TMP_FILE"  # Remove any existing file to prevent conflicts
 
@@ -33,27 +34,27 @@ fi
 chmod +x "$TMP_FILE"
 
 # Move to /usr/local/bin with sudo
-echo "Moving executable to /usr/local/bin/"
-sudo mv "$TMP_FILE" /usr/local/bin/spwd
+echo "Moving executable to $INSTALL_DIR/"
+sudo mv "$TMP_FILE" "$INSTALL_DIR/spwd"
 
-# Ensure /etc/spwd/ directory exists
-sudo mkdir -p /etc/spwd
-
-# Ensure the database exists
-if [ ! -f "/etc/spwd/passwords.db" ]; then
-    echo "Creating database file..."
-    sudo touch /etc/spwd/passwords.db
+# Ensure passwords.db exists next to the executable
+DB_PATH="$INSTALL_DIR/passwords.db"
+if [ ! -f "$DB_PATH" ]; then
+    echo "Creating passwords.db..."
+    sudo touch "$DB_PATH"
+    sudo chmod 0660 "$DB_PATH"
+    sudo chown $(whoami):$(id -gn) "$DB_PATH"
 fi
 
 # Define the URL for config.sample.json
 CONFIG_URL="https://raw.githubusercontent.com/Aryagorjipour/spwd/main/config.sample.json"
 
 # Download config.sample.json and create config.json
-if [ ! -f "/etc/spwd/config.json" ]; then
+if [ ! -f "$INSTALL_DIR/config.json" ]; then
     echo "Generating config.json..."
-    sudo curl -sSL -o /etc/spwd/config.sample.json "$CONFIG_URL"
+    sudo curl -sSL -o "$INSTALL_DIR/config.sample.json" "$CONFIG_URL"
 
-    if [ ! -f "/etc/spwd/config.sample.json" ]; then
+    if [ ! -f "$INSTALL_DIR/config.sample.json" ]; then
         echo "Error: Failed to download config.sample.json"
         exit 1
     fi
@@ -62,7 +63,7 @@ if [ ! -f "/etc/spwd/config.json" ]; then
     SECRET_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n')
 
     # Use jq to modify JSON properly
-    sudo jq --arg key "$SECRET_KEY" '.secret_key = $key' /etc/spwd/config.sample.json | sudo tee /etc/spwd/config.json > /dev/null
+    sudo jq --arg key "$SECRET_KEY" '.secret_key = $key' "$INSTALL_DIR/config.sample.json" | sudo tee "$INSTALL_DIR/config.json" > /dev/null
 fi
 
 echo "Installation completed successfully!"

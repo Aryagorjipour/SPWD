@@ -6,45 +6,33 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
+	"path/filepath"
+	"syscall"
 	"time"
 
 	"go.etcd.io/bbolt"
 )
 
-// DB file path (OS-Specific)
-var dbPath string
-var db *bbolt.DB
-
-func init() {
-	if runtime.GOOS == "windows" {
-		dbPath = "C:\\ProgramData\\spwd\\passwords.db"
-	} else {
-		dbPath = "/etc/spwd/passwords.db"
+// GetExecutablePath returns the directory where the binary is located
+func GetExecutablePath() (string, error) {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "", err
 	}
+	return filepath.Dir(exePath), nil
 }
 
-// PasswordEntry represents a stored password
-type PasswordEntry struct {
-	ID        int    `json:"id"`
-	Password  string `json:"password"`
-	CreatedAt string `json:"created_at"`
-	Note      string `json:"note,omitempty"`
-}
-
-// OpenDB initializes the database, creating it if it does not exist
+// OpenDB initializes the database in the same directory as the executable
 func OpenDB() error {
-	// Ensure the directory exists
-	dbDir := dbPath[:len(dbPath)-len("/passwords.db")]
-	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
-		err := os.MkdirAll(dbDir, 0755)
-		if err != nil {
-			log.Println("Error creating database directory:", err)
-			return err
-		}
+	exeDir, err := GetExecutablePath()
+	if err != nil {
+		log.Println("Error determining executable path:", err)
+		return err
 	}
 
-	// Check if the database file exists
+	dbPath := filepath.Join(exeDir, "passwords.db")
+
+	// Check if the database file exists, create it if necessary
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		log.Println("Database file not found. Creating new database...")
 		file, err := os.Create(dbPath)
@@ -53,10 +41,24 @@ func OpenDB() error {
 			return err
 		}
 		file.Close()
+
+		// Set group read/write permissions
+		err = os.Chmod(dbPath, 0660)
+		if err != nil {
+			log.Println("Failed to set permissions on database file:", err)
+		}
+
+		// Set the correct group (same as the executable)
+		exeInfo, err := os.Stat(filepath.Join(exeDir, "spwd"))
+		if err == nil {
+			if stat, ok := exeInfo.Sys().(*syscall.Stat_t); ok {
+				os.Chown(dbPath, int(stat.Uid), int(stat.Gid))
+			}
+		}
 	}
 
 	// Open or create the database
-	var err error
+	var db *bbolt.DB
 	db, err = bbolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		log.Println("Failed to open database:", err)
@@ -73,7 +75,18 @@ func OpenDB() error {
 		return err
 	}
 
+	log.Println("Database initialized successfully at", dbPath)
 	return nil
+}
+
+var db *bbolt.DB
+
+// PasswordEntry represents a stored password
+type PasswordEntry struct {
+	ID        int    `json:"id"`
+	Password  string `json:"password"`
+	CreatedAt string `json:"created_at"`
+	Note      string `json:"note,omitempty"`
 }
 
 // SavePassword stores a password in the database with an auto-incremented ID
