@@ -31,7 +31,6 @@ func GetConfigPath() string {
 // LoadSecretKey loads the key from config.json and decodes it
 func LoadSecretKey() error {
 	configPath := GetConfigPath()
-	fmt.Println("🟢 Using config path:", configPath) // Debug log
 
 	file, err := os.Open(configPath)
 	if err != nil {
@@ -56,7 +55,6 @@ func LoadSecretKey() error {
 	}
 
 	copy(secretKey[:], decodedKey)
-	fmt.Println("✅ Secret key loaded successfully")
 	return nil
 }
 
