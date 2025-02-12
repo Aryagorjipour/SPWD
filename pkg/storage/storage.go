@@ -31,6 +31,7 @@ func OpenDB() error {
 	}
 
 	dbPath := filepath.Join(exeDir, "passwords.db")
+	log.Println("Using database path:", dbPath) // Debug log
 
 	// Check if the database file exists, create it if necessary
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
@@ -57,9 +58,7 @@ func OpenDB() error {
 		}
 	}
 
-	// Open or create the database
-	var db *bbolt.DB
-	db, err = bbolt.Open(dbPath, 0600, nil)
+	db, err = bbolt.Open(dbPath, 0660, nil)
 	if err != nil {
 		log.Println("Failed to open database:", err)
 		return err
