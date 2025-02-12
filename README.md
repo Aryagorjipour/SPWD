@@ -9,6 +9,10 @@
 - **Password Modes**: Generate passwords of varying complexity (from very weak to unbreakable).
 - **Customizable Length**: Set the desired length of the password.
 - **Clipboard Support**: Automatically copies the generated password to your clipboard.
+- **Secure Password Storage**: Store generated passwords securely using AES encryption.
+- **View Stored Passwords**: List all stored passwords with `-s`.
+- **Delete Stored Passwords**: Remove a stored password using `-d [id]`.
+- **Add Notes to Passwords**: Attach a note to a stored password with `-n [id] "note"`.
 - **Cross-platform**: Works on both Windows and Linux.
 
 ---
@@ -78,6 +82,26 @@ spwd -L <length> -M <mode>
   spwd -L 20 -M xb
   ```
   This will generate an unbreakable password of 20 characters.
+
+### Storing Passwords
+
+- **Store and retrieve stored passwords**:
+  ```bash
+  spwd -s
+  ```
+  This will display all stored passwords (decrypted).
+
+- **Delete a stored password by ID**:
+  ```bash
+  spwd -d [id]
+  ```
+  This will delete the specified password.
+
+- **Add a note to a stored password**:
+  ```bash
+  spwd -n [id] "My secure account"
+  ```
+  This will attach a note to the stored password.
 
 ---
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Linux Install Script for spwd
 
-set -e  # Exit immediately if a command exits with a non-zero status.
+set -e  # Exit if any command fails
 
 echo "Installing spwd..."
 echo
@@ -23,6 +23,15 @@ chmod +x spwd
 # Move to /usr/local/bin for system-wide usage
 echo "Moving executable to /usr/local/bin/"
 sudo mv spwd /usr/local/bin/spwd
+
+# Generate config.json if it doesn't exist
+if [ ! -f "/etc/spwd/config.json" ]; then
+    echo "Generating config.json..."
+    sudo mkdir -p /etc/spwd
+    SECRET_KEY=$(head -c 32 /dev/urandom | base64)
+    sudo cp config.sample.json /etc/spwd/config.json
+    sudo sed -i "s/GENERATE_ON_INSTALL/$SECRET_KEY/" /etc/spwd/config.json
+fi
 
 echo "Installation completed successfully!"
 echo "You can now run 'spwd' from any terminal."
