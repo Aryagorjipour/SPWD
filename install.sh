@@ -1,7 +1,7 @@
 #!/bin/bash
 # Linux Install Script for spwd
 
-set -e  # Exit if any command fails
+set -e  # Exit immediately if a command exits with a non-zero status.
 
 echo "Installing spwd..."
 echo
@@ -24,12 +24,23 @@ chmod +x spwd
 echo "Moving executable to /usr/local/bin/"
 sudo mv spwd /usr/local/bin/spwd
 
-# Generate config.json if it doesn't exist
+# Ensure /etc/spwd/ directory exists
+sudo mkdir -p /etc/spwd
+
+# Download config.sample.json from GitHub and create config.json
+CONFIG_URL="https://raw.githubusercontent.com/Aryagorjipour/spwd/main/config.sample.json"
+
 if [ ! -f "/etc/spwd/config.json" ]; then
     echo "Generating config.json..."
-    sudo mkdir -p /etc/spwd
+    sudo curl -sSL -o /etc/spwd/config.sample.json "$CONFIG_URL"
+
+    if [ ! -f "/etc/spwd/config.sample.json" ]; then
+        echo "Error: Failed to download config.sample.json"
+        exit 1
+    fi
+
     SECRET_KEY=$(head -c 32 /dev/urandom | base64)
-    sudo cp config.sample.json /etc/spwd/config.json
+    sudo cp /etc/spwd/config.sample.json /etc/spwd/config.json
     sudo sed -i "s/GENERATE_ON_INSTALL/$SECRET_KEY/" /etc/spwd/config.json
 fi
 
