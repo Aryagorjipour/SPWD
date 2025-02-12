@@ -22,6 +22,7 @@ var secretKey [32]byte
 func GetConfigPath() string {
 	exePath, err := os.Executable()
 	if err != nil {
+		fmt.Println("❌ Error getting executable path:", err)
 		return ""
 	}
 	return filepath.Join(filepath.Dir(exePath), "config.json")
@@ -30,6 +31,7 @@ func GetConfigPath() string {
 // LoadSecretKey loads the key from config.json and decodes it
 func LoadSecretKey() error {
 	configPath := GetConfigPath()
+	fmt.Println("🟢 Using config path:", configPath) // Debug log
 
 	file, err := os.Open(configPath)
 	if err != nil {
@@ -50,10 +52,11 @@ func LoadSecretKey() error {
 
 	// Ensure the secret key is exactly 32 bytes
 	if len(decodedKey) != 32 {
-		return errors.New(fmt.Sprintf("invalid secret key length: %d; expected 32", len(decodedKey)))
+		return fmt.Errorf("invalid secret key length: got %d bytes, expected 32", len(decodedKey))
 	}
 
 	copy(secretKey[:], decodedKey)
+	fmt.Println("✅ Secret key loaded successfully")
 	return nil
 }
 
