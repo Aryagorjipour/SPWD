@@ -5,26 +5,29 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"golang.org/x/crypto/nacl/secretbox"
 	"os"
-	"runtime"
+	"path/filepath"
 )
 
+// Config structure for loading the secret key
 type Config struct {
 	SecretKey string `json:"secret_key"`
 }
 
 var secretKey [32]byte
 
-// GetConfigPath determines the config path based on OS
+// GetConfigPath determines the correct config.json path based on the executable location
 func GetConfigPath() string {
-	if runtime.GOOS == "windows" {
-		return "C:\\ProgramData\\spwd\\config.json"
+	exePath, err := os.Executable()
+	if err != nil {
+		return ""
 	}
-	return "/etc/spwd/config.json"
+	return filepath.Join(filepath.Dir(exePath), "config.json")
 }
 
-// LoadSecretKey loads the secret key from config.json
+// LoadSecretKey loads the key from config.json and decodes it
 func LoadSecretKey() error {
 	configPath := GetConfigPath()
 
@@ -39,11 +42,18 @@ func LoadSecretKey() error {
 		return errors.New("failed to parse config.json: " + err.Error())
 	}
 
-	if len(config.SecretKey) != 32 {
-		return errors.New("invalid secret key length: must be 32 bytes")
+	// Decode base64 secret key
+	decodedKey, err := base64.StdEncoding.DecodeString(config.SecretKey)
+	if err != nil {
+		return errors.New("failed to decode base64 secret key: " + err.Error())
 	}
 
-	copy(secretKey[:], config.SecretKey)
+	// Ensure the secret key is exactly 32 bytes
+	if len(decodedKey) != 32 {
+		return errors.New(fmt.Sprintf("invalid secret key length: %d; expected 32", len(decodedKey)))
+	}
+
+	copy(secretKey[:], decodedKey)
 	return nil
 }
 

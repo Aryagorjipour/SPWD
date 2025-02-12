@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"go.etcd.io/bbolt"
@@ -26,56 +24,31 @@ func GetExecutablePath() (string, error) {
 func OpenDB() error {
 	exeDir, err := GetExecutablePath()
 	if err != nil {
-		log.Println("❌ Error determining executable path:", err)
+		fmt.Println("❌ Error determining executable path:", err)
 		return err
 	}
 
 	dbPath := filepath.Join(exeDir, "passwords.db")
-	log.Println("🟢 Using database path:", dbPath) // Debug log
-
-	// Check if the database file exists, create it if necessary
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		log.Println("⚠️ Database file not found. Creating new database...")
-		file, err := os.Create(dbPath)
-		if err != nil {
-			log.Println("❌ Error creating database file:", err)
-			return err
-		}
-		file.Close()
-
-		// Set group read/write permissions
-		err = os.Chmod(dbPath, 0660)
-		if err != nil {
-			log.Println("❌ Failed to set permissions on database file:", err)
-		}
-
-		// Set the correct group (same as the executable)
-		exeInfo, err := os.Stat(filepath.Join(exeDir, "spwd"))
-		if err == nil {
-			if stat, ok := exeInfo.Sys().(*syscall.Stat_t); ok {
-				os.Chown(dbPath, int(stat.Uid), int(stat.Gid))
-			}
-		}
-	}
 
 	// Open the database
-	db, err = bbolt.Open(dbPath, 0660, nil)
-	if err != nil {
-		log.Println("❌ Failed to open database:", err)
-		return err
+	var errDB error
+	db, errDB = bbolt.Open(dbPath, 0660, nil)
+	if errDB != nil {
+		fmt.Println("❌ Failed to open database:", errDB)
+		return errDB
 	}
 
-	// Create the "Passwords" bucket if it doesn't exist
-	err = db.Update(func(tx *bbolt.Tx) error {
+	// Create "Passwords" bucket
+	errBucket := db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("Passwords"))
 		return err
 	})
-	if err != nil {
-		log.Println("❌ Failed to create Passwords bucket:", err)
-		return err
+
+	if errBucket != nil {
+		fmt.Println("❌ Failed to create Passwords bucket:", errBucket)
+		return errBucket
 	}
 
-	log.Println("✅ Database initialized successfully at", dbPath)
 	return nil
 }
 
@@ -93,31 +66,33 @@ type PasswordEntry struct {
 func SavePassword(password string) (int, error) {
 	err := OpenDB()
 	if err != nil {
-		log.Println("❌ Error opening database:", err)
+		fmt.Println("❌ Error opening database:", err)
 		return 0, err
 	}
 	defer db.Close()
 
-	// Encrypt the password before saving
+	// Encrypt password
 	encryptedPass, err := Encrypt(password)
 	if err != nil {
-		log.Println("❌ Error encrypting password:", err)
+		fmt.Println("❌ Error encrypting password:", err)
 		return 0, err
 	}
 
 	var id uint64
 	err = db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("Passwords"))
+		if b == nil {
+			return errors.New("passwords bucket missing")
+		}
 
-		// Get next sequence ID (auto-increment)
+		// Get next sequence ID
 		nextID, err := b.NextSequence()
 		if err != nil {
-			log.Println("❌ Error getting next sequence ID:", err)
 			return err
 		}
 		id = nextID
 
-		// Create new entry
+		// Store password
 		entry := PasswordEntry{
 			ID:        int(id),
 			Password:  encryptedPass,
@@ -125,20 +100,14 @@ func SavePassword(password string) (int, error) {
 		}
 		data, _ := json.Marshal(entry)
 
-		// Store the password entry with its ID as the key
 		err = b.Put([]byte(fmt.Sprintf("%d", id)), data)
-		if err == nil {
-			log.Printf("🟢 Password stored successfully with ID: %d\n", id)
+		if err != nil {
+			fmt.Println("❌ Failed to store password:", err)
 		}
 		return err
 	})
 
-	if err != nil {
-		log.Println("❌ Failed to save password:", err)
-		return 0, err
-	}
-
-	return int(id), nil
+	return int(id), err
 }
 
 // GetAllPasswords retrieves all passwords (decrypted)
