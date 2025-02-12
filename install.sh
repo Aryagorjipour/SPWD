@@ -16,9 +16,18 @@ fi
 
 echo "Downloading latest version from: $LATEST_RELEASE"
 
-# Ensure we have permission to write in /tmp/
+# Ensure download location is writable
 TMP_FILE="/tmp/spwd"
+sudo rm -f "$TMP_FILE"  # Remove any existing file to prevent conflicts
+
+# Download the binary to /tmp/
 curl -L -o "$TMP_FILE" "$LATEST_RELEASE"
+
+# Verify the file was downloaded
+if [[ ! -f "$TMP_FILE" ]]; then
+    echo "Error: Failed to download spwd binary."
+    exit 1
+fi
 
 # Make it executable
 chmod +x "$TMP_FILE"
