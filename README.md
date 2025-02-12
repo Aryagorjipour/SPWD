@@ -99,7 +99,7 @@ spwd -L <length> -M <mode>
 
 - **Add a note to a stored password**:
   ```bash
-  spwd -n [id] "My secure account"
+  spwd -n [id] -note "My secure account"
   ```
   This will attach a note to the stored password.
 
