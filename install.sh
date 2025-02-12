@@ -1,7 +1,7 @@
 #!/bin/bash
 # Linux Install Script for spwd
 
-set -e  # Exit immediately if a command exits with a non-zero status.
+set -e  # Exit immediately if a command fails
 
 echo "Installing spwd..."
 echo
@@ -15,14 +15,17 @@ if [[ -z "$LATEST_RELEASE" ]]; then
 fi
 
 echo "Downloading latest version from: $LATEST_RELEASE"
-curl -L -o spwd "$LATEST_RELEASE"
+
+# Ensure we have permission to write in /tmp/
+TMP_FILE="/tmp/spwd"
+curl -L -o "$TMP_FILE" "$LATEST_RELEASE"
 
 # Make it executable
-chmod +x spwd
+chmod +x "$TMP_FILE"
 
-# Move to /usr/local/bin for system-wide usage
+# Move to /usr/local/bin with sudo
 echo "Moving executable to /usr/local/bin/"
-sudo mv spwd /usr/local/bin/spwd
+sudo mv "$TMP_FILE" /usr/local/bin/spwd
 
 # Ensure /etc/spwd/ directory exists
 sudo mkdir -p /etc/spwd
