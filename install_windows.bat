@@ -34,9 +34,11 @@ if not exist "%INSTALL_DIR%\config.sample.json" (
 echo Renaming config.sample.json to config.json...
 rename "%INSTALL_DIR%\config.sample.json" "config.json"
 
-:: Replace "secret_key": "GENERATE_ON_INSTALL" with a static key
-echo Updating config.json with static secret key...
-powershell -Command "(Get-Content '%INSTALL_DIR%\config.json') -replace '\"secret_key\": *\"GENERATE_ON_INSTALL\"', '\"secret_key\": \"STATIC_SECRET_KEY_HERE\"' | Set-Content '%INSTALL_DIR%\config.json'"
+:: Define the static Base64-encoded secret key
+set STATIC_SECRET_KEY=U29tZVNlY3JldEtleVRoYXRDYW5EZWNyeXB0
+
+:: Update config.json with the static secret key
+powershell -Command "(Get-Content '%INSTALL_DIR%\config.json') -replace '\"secret_key\": \"GENERATE_ON_INSTALL\"', '\"secret_key\": \"%STATIC_SECRET_KEY%\"' | Set-Content '%INSTALL_DIR%\config.json'"
 
 echo Installation completed successfully!
 echo You can now run 'spwd' from any command prompt.
