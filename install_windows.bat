@@ -35,7 +35,7 @@ echo Renaming config.sample.json to config.json...
 rename "%INSTALL_DIR%\config.sample.json" "config.json"
 
 :: Define the static Base64-encoded secret key
-set STATIC_SECRET_KEY=U29tZVNlY3JldEtleVRoYXRDYW5EZWNyeXB0
+set STATIC_SECRET_KEY=Gr+fNVnxzACv3wYEGk5DlwoRbjnGTQyJXUbu/LgAqM8=
 
 :: Update config.json with the static secret key
 powershell -Command "(Get-Content '%INSTALL_DIR%\config.json') -replace '\"secret_key\": \"GENERATE_ON_INSTALL\"', '\"secret_key\": \"%STATIC_SECRET_KEY%\"' | Set-Content '%INSTALL_DIR%\config.json'"
