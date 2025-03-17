@@ -28,6 +28,21 @@ if not exist "C:\ProgramData\spwd\passwords.db" (
     type nul > "C:\ProgramData\spwd\passwords.db"
 )
 
+:: Download config.sample.json
+powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://raw.githubusercontent.com/Aryagorjipour/spwd/main/config.sample.json', 'C:\ProgramData\spwd\config.sample.json')"
+
+:: Verify if the file was downloaded
+if not exist "C:\ProgramData\spwd\config.sample.json" (
+    echo Error: Failed to download config.sample.json
+    exit /b 1
+)
+
+:: Generate a 32-byte base64 secret key using PowerShell
+for /f %%A in ('powershell -Command "[Convert]::ToBase64String((1..32 | % {Get-Random -Maximum 256}))"') do set SECRET_KEY=%%A
+
+:: Create config.json by replacing the placeholder in config.sample.json
+powershell -Command "(Get-Content 'C:\ProgramData\spwd\config.sample.json') -replace '\"secret_key\": *\".*\"', '\"secret_key\": \"%SECRET_KEY%\"' | Set-Content 'C:\ProgramData\spwd\config.json'"
+
 echo Installation completed successfully!
 echo You can now run 'spwd' from any command prompt.
 pause
